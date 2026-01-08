@@ -8,6 +8,9 @@ import 'package:background_eraser/core/bloc/bloc_providers.dart';
 import 'package:background_eraser/features/profile/widgets/profile_app_bar.dart';
 import 'package:background_eraser/features/profile/widgets/profile_settings_card.dart';
 import 'package:background_eraser/features/profile/widgets/profile_info_card.dart';
+import 'package:background_eraser/features/eraser/domain/usecases/clear_all_erased_images_usecase.dart';
+import 'package:background_eraser/features/home/bloc/home_bloc.dart';
+import 'package:background_eraser/features/home/bloc/home_event.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -17,15 +20,28 @@ class ProfileScreen extends StatelessWidget {
       context: context,
       title: 'Clear cache',
       message:
-          'Are you sure you want to clear all cached data? This action cannot be undone.',
+          'Are you sure you want to clear all saved images? This action cannot be undone.',
       confirmText: 'Clear',
       cancelText: 'Cancel',
       isDanger: true,
-      onConfirm: () {
-        // TODO: Add clear cache logic
-        CustomSnackbar.show(
-          context: context,
-          message: 'Cache cleared successfully',
+      onConfirm: () async {
+        final clearAllUseCase = getIt<ClearAllErasedImagesUseCase>();
+        final result = await clearAllUseCase();
+        
+        result.fold(
+          (failure) {
+            CustomSnackbar.show(
+              context: context,
+              message: 'Failed to clear images: ${failure.message ?? "Unknown error"}',
+            );
+          },
+          (_) {
+            context.read<HomeBloc>().add(const HomeLoadPhotos());
+            CustomSnackbar.show(
+              context: context,
+              message: 'All images cleared successfully',
+            );
+          },
         );
       },
     );

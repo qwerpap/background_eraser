@@ -23,12 +23,11 @@ class HomeImageSourceSelected extends HomeEvent {
 }
 
 class HomeSavePhoto extends HomeEvent {
-  const HomeSavePhoto(this.imageFile);
+  const HomeSavePhoto(this.imageFile, {this.originalPath});
 
   final File imageFile;
+  final String? originalPath;
 
   @override
-  List<Object?> get props => [imageFile];
+  List<Object?> get props => [imageFile, originalPath];
 }
-
-

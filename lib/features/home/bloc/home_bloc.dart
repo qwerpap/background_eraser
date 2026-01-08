@@ -2,21 +2,30 @@ import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart' as picker;
+import 'package:path_provider/path_provider.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../core/services/gallery_service.dart';
-import '../../../core/bloc/bloc_providers.dart';
-import 'package:talker_flutter/talker_flutter.dart';
-import '../data/repositories/photo_repository.dart';
-import '../data/datasources/photo_local_data_source.dart';
+import '../../eraser/domain/usecases/get_recent_erased_images_usecase.dart';
+import '../../eraser/domain/usecases/save_erased_image_usecase.dart';
+import '../../eraser/domain/entities/erased_image.dart';
+import '../data/models/photo_model.dart';
 import 'home_event.dart';
 import 'home_state.dart';
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
-  final PhotoRepository _photoRepository;
+  final GetRecentErasedImagesUseCase _getRecentErasedImagesUseCase;
+  final SaveErasedImageUseCase _saveErasedImageUseCase;
+  final Talker _talker;
 
-  HomeBloc() 
-      : _photoRepository = PhotoRepository(PhotoLocalDataSource.instance),
-        super(const HomeInitial()) {
+  HomeBloc({
+    required GetRecentErasedImagesUseCase getRecentErasedImagesUseCase,
+    required SaveErasedImageUseCase saveErasedImageUseCase,
+    required Talker talker,
+  }) : _getRecentErasedImagesUseCase = getRecentErasedImagesUseCase,
+       _saveErasedImageUseCase = saveErasedImageUseCase,
+       _talker = talker,
+       super(const HomeInitial()) {
     on<HomeLoadPhotos>(_onLoadPhotos);
     on<HomeImageSourceSelected>(_onImageSourceSelected);
     on<HomeSavePhoto>(_onSavePhoto);
@@ -26,14 +35,51 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     HomeLoadPhotos event,
     Emitter<HomeState> emit,
   ) async {
+    await _loadPhotos(emit);
+  }
+
+  Future<void> _loadPhotos(Emitter<HomeState> emit) async {
     emit(const HomeLoading());
-    try {
-      final photos = await _photoRepository.getAllPhotos();
-      emit(HomeLoaded(photos));
-    } catch (e) {
-      getIt<Talker>().error('Error loading photos: $e');
-      emit(HomeError('Failed to load photos: ${e.toString()}'));
-    }
+    final result = await _getRecentErasedImagesUseCase();
+
+    result.fold(
+      (failure) {
+        _talker.error('Error loading photos: ${failure.message}');
+        emit(
+          HomeError(
+            'Failed to load photos: ${failure.message ?? "Unknown error"}',
+          ),
+        );
+      },
+      (erasedImages) {
+        final photos = erasedImages.map(_erasedImageToPhotoModel).toList();
+        emit(HomeLoaded(photos));
+      },
+    );
+  }
+
+  Future<void> _reloadPhotos(Emitter<HomeState> emit) async {
+    final result = await _getRecentErasedImagesUseCase();
+    result.fold(
+      (failure) {
+        _talker.error('Error reloading photos: ${failure.message}');
+        if (state is HomeLoaded) {
+          emit(state);
+        }
+      },
+      (erasedImages) {
+        final photos = erasedImages.map(_erasedImageToPhotoModel).toList();
+        emit(HomeLoaded(photos));
+      },
+    );
+  }
+
+  PhotoModel _erasedImageToPhotoModel(ErasedImage erasedImage) {
+    return PhotoModel(
+      id: erasedImage.id.toString(),
+      imagePath: erasedImage.resultPath,
+      createdAt: erasedImage.createdAt,
+    );
   }
 
   Future<void> _onImageSourceSelected(
@@ -42,7 +88,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   ) async {
     // Не показываем loading при выборе источника фото
     // Сохраняем текущее состояние, чтобы фото не скрывались
-    
+
     try {
       File? image;
 
@@ -61,19 +107,20 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           emit(state);
         } else if (state is HomeInitial || state is HomeLoading) {
           // Если состояние было Initial или Loading, загружаем фото
-          final photos = await _photoRepository.getAllPhotos();
-          emit(HomeLoaded(photos));
+          await _loadPhotos(emit);
         } else {
           emit(state);
         }
       }
     } catch (e) {
-      getIt<Talker>().error('Error picking image: $e');
+      _talker.error('Error picking image: $e');
       String errorMessage = 'Failed to pick image';
       if (e.toString().contains('Camera is not available')) {
-        errorMessage = 'Camera is not available on iOS simulator. Please use a real device or select from gallery.';
+        errorMessage =
+            'Camera is not available on iOS simulator. Please use a real device or select from gallery.';
       } else if (e.toString().contains('permission')) {
-        errorMessage = 'Permission denied. Please enable camera/gallery access in settings.';
+        errorMessage =
+            'Permission denied. Please enable camera/gallery access in settings.';
       } else {
         errorMessage = 'Failed to pick image: ${e.toString()}';
       }
@@ -93,20 +140,41 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     try {
-      final photo = await _photoRepository.savePhoto(event.imageFile);
-      getIt<Talker>().info('Photo saved: ${photo.id}');
-      
-      // Обновляем список фото
-      final photos = await _photoRepository.getAllPhotos();
-      
-      // Эмитим состояние сохранения с обновленным списком фото
-      emit(HomePhotoSaved(photo, photos));
-      
-      // Сразу же переходим в загруженное состояние с фото
-      emit(HomeLoaded(photos));
+      final photosDir = await _getPhotosDirectory();
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}.png';
+      final savedPath = '${photosDir.path}/$fileName';
+
+      await event.imageFile.copy(savedPath);
+      _talker.info('Photo file copied to: $savedPath');
+
+      final result = await _saveErasedImageUseCase(
+        originalPath: event.originalPath ?? event.imageFile.path,
+        resultPath: savedPath,
+      );
+
+      result.fold(
+        (failure) {
+          _talker.error('Error saving photo: ${failure.message}');
+          if (state is HomeLoaded) {
+            emit(state);
+          } else {
+            emit(
+              HomeError(
+                'Failed to save photo: ${failure.message ?? "Unknown error"}',
+              ),
+            );
+          }
+        },
+        (_) {
+          _talker.info('Photo saved successfully');
+        },
+      );
+
+      if (result.isRight) {
+        await _reloadPhotos(emit);
+      }
     } catch (e) {
-      getIt<Talker>().error('Error saving photo: $e');
-      // Восстанавливаем предыдущее состояние при ошибке
+      _talker.error('Error copying photo file: $e');
       if (state is HomeLoaded) {
         emit(state);
       } else {
@@ -114,5 +182,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       }
     }
   }
-}
 
+  Future<Directory> _getPhotosDirectory() async {
+    final appDocDir = await getApplicationDocumentsDirectory();
+    final photosDir = Directory('${appDocDir.path}/photos');
+    if (!await photosDir.exists()) {
+      await photosDir.create(recursive: true);
+    }
+    return photosDir;
+  }
+}

@@ -15,6 +15,13 @@ import '../../features/eraser/data/datasources/remove_bg_remote_datasource.dart'
 import '../../features/eraser/data/repositories/remove_bg_repository_impl.dart';
 import '../../features/eraser/domain/repositories/remove_bg_repository.dart';
 import '../../features/eraser/domain/usecases/remove_background_usecase.dart';
+import '../../features/eraser/data/database/eraser_database.dart';
+import '../../features/eraser/data/datasources/eraser_local_datasource.dart';
+import '../../features/eraser/data/repositories/eraser_repository_impl.dart';
+import '../../features/eraser/domain/repositories/eraser_repository.dart';
+import '../../features/eraser/domain/usecases/save_erased_image_usecase.dart';
+import '../../features/eraser/domain/usecases/get_recent_erased_images_usecase.dart';
+import '../../features/eraser/domain/usecases/clear_all_erased_images_usecase.dart';
 import '../../constants/api_constants.dart';
 
 final GetIt getIt = GetIt.instance;
@@ -59,7 +66,11 @@ class BlocProviders {
 
   static void _registerHomeBloc() {
     getIt.registerLazySingleton<HomeBloc>(
-      () => HomeBloc(),
+      () => HomeBloc(
+        getRecentErasedImagesUseCase: getIt<GetRecentErasedImagesUseCase>(),
+        saveErasedImageUseCase: getIt<SaveErasedImageUseCase>(),
+        talker: getIt<Talker>(),
+      ),
     );
   }
 
@@ -92,28 +103,48 @@ class BlocProviders {
       ),
     );
 
+    getIt.registerLazySingleton<EraserDatabase>(
+      () => EraserDatabase(),
+    );
+
+    getIt.registerFactory<EraserLocalDataSource>(
+      () => EraserLocalDataSource(
+        getIt<EraserDatabase>(),
+        getIt<Talker>(),
+      ),
+    );
+
+    getIt.registerFactory<EraserRepository>(
+      () => EraserRepositoryImpl(
+        getIt<EraserLocalDataSource>(),
+      ),
+    );
+
+    getIt.registerFactory<SaveErasedImageUseCase>(
+      () => SaveErasedImageUseCase(
+        getIt<EraserRepository>(),
+      ),
+    );
+
+    getIt.registerFactory<GetRecentErasedImagesUseCase>(
+      () => GetRecentErasedImagesUseCase(
+        getIt<EraserRepository>(),
+      ),
+    );
+
+    getIt.registerFactory<ClearAllErasedImagesUseCase>(
+      () => ClearAllErasedImagesUseCase(
+        getIt<EraserRepository>(),
+      ),
+    );
+
     getIt.registerFactory<EraserCubit>(
       () => EraserCubit(
         getIt<RemoveBackgroundUseCase>(),
+        getIt<Talker>(),
       ),
     );
   }
-
-  // TODO: Uncomment when features are ready
-  // static void _registerSeparation() {
-  //   // Dio client for API calls
-  //   getIt.registerLazySingleton<Dio>(
-  //     () => Dio(BaseOptions(baseUrl: ApiConstants.baseUrl)),
-  //   );
-
-  //   // Remote datasource
-  //   getIt.registerFactory<SeparationRemoteDataSource>(
-  //     () => SeparationRemoteDataSource(
-  //       dio: getIt<Dio>(),
-  //       talker: getIt<Talker>(),
-  //     ),
-  //   );
-
 
 
   static Widget wrapWithProviders({

@@ -113,19 +113,22 @@ class _EraserScreenState extends State<EraserScreen> {
     }
   }
 
-  void _handleSave() {
+  void _handleSave() async {
     final cubit = context.read<EraserCubit>();
     final state = cubit.state;
 
     File? imageToSave;
+    String? originalPath;
+    
     if (state is EraserSuccess) {
       imageToSave = state.processedImage;
+      originalPath = state.originalImage.path;
     } else {
       imageToSave = _selectedImage ?? widget.imageFile;
     }
 
     if (imageToSave != null) {
-      context.read<HomeBloc>().add(HomeSavePhoto(imageToSave));
+      context.read<HomeBloc>().add(HomeSavePhoto(imageToSave, originalPath: originalPath));
       if (context.canPop()) {
         context.pop();
       } else {
@@ -258,8 +261,8 @@ class _EraserScreenState extends State<EraserScreen> {
                       ),
                     if (!hasNoImage)
                       BottomActionPanel(
-                        onRemoveBackground: (state is EraserInitial ||
-                                state is EraserError)
+                        onRemoveBackground:
+                            (state is EraserInitial || state is EraserError)
                             ? _handleRemoveBackground
                             : null,
                         onSave: hasRemovedBackground ? _handleSave : null,
