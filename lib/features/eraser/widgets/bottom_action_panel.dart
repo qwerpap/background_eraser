@@ -32,22 +32,43 @@ class BottomActionPanel extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (!hasRemovedBackground)
-              CustomElevatedButton(
-                text: 'Remove background',
-                onPressed: (isProcessing || onRemoveBackground == null)
-                    ? null
-                    : onRemoveBackground,
-                height: 56,
+            Opacity(
+              opacity: hasRemovedBackground ? 0.0 : 1.0,
+              child: IgnorePointer(
+                ignoring: hasRemovedBackground,
+                child: CustomElevatedButton(
+                  text: 'Remove background',
+                  onPressed: (isProcessing || onRemoveBackground == null)
+                      ? null
+                      : onRemoveBackground,
+                  height: 56,
+                ),
               ),
-            if (!hasRemovedBackground) const SizedBox(height: 12),
-            CustomElevatedButton(
-              text: 'Save',
-              onPressed: (isProcessing || onSave == null) ? null : onSave,
-              height: 56,
-              transparent: !hasRemovedBackground,
-              backgroundColor: hasRemovedBackground ? null : Colors.transparent,
             ),
+            const SizedBox(height: 12),
+            hasRemovedBackground
+                ? Center(
+                    child: CustomElevatedButton(
+                      text: 'Save',
+                      onPressed: (isProcessing || onSave == null)
+                          ? null
+                          : onSave,
+                      height: 56,
+                      transparent: !hasRemovedBackground,
+                      backgroundColor: hasRemovedBackground
+                          ? null
+                          : Colors.transparent,
+                    ),
+                  )
+                : CustomElevatedButton(
+                    text: 'Save',
+                    onPressed: (isProcessing || onSave == null) ? null : onSave,
+                    height: 56,
+                    transparent: !hasRemovedBackground,
+                    backgroundColor: hasRemovedBackground
+                        ? null
+                        : Colors.transparent,
+                  ),
           ],
         ),
       ),

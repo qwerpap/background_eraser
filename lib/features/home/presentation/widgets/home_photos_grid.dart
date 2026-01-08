@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:background_eraser/features/home/data/models/photo_model.dart';
-import 'package:background_eraser/features/home/widgets/photo_card.dart';
+import 'package:background_eraser/features/home/presentation/widgets/photo_card.dart';
 
 class HomePhotosGrid extends StatelessWidget {
   const HomePhotosGrid({super.key, required this.photos});

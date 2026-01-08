@@ -26,4 +26,3 @@ class PhotoRepository {
     await _localDataSource.deletePhoto(photoId);
   }
 }
-

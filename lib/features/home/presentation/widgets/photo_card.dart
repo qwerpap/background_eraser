@@ -1,12 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../data/models/photo_model.dart';
+import '../../data/models/photo_model.dart';
 
 class PhotoCard extends StatelessWidget {
-  const PhotoCard({
-    super.key,
-    required this.photo,
-  });
+  const PhotoCard({super.key, required this.photo});
 
   final PhotoModel photo;
 

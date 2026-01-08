@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:background_eraser/core/shared/widgets/custom_app_bar.dart';
-import 'package:background_eraser/features/home/widgets/upload_photo.dart';
-import 'package:background_eraser/features/home/widgets/title_text.dart';
+import 'package:background_eraser/features/home/presentation/widgets/upload_photo.dart';
+import 'package:background_eraser/features/home/presentation/widgets/title_text.dart';
 
 class HomeHeaderSection extends StatelessWidget {
   const HomeHeaderSection({super.key, required this.onUploadPhoto});

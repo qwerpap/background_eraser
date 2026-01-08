@@ -6,33 +6,32 @@ class Toolbar extends StatelessWidget {
     super.key,
     this.onUndo,
     this.onRedo,
-    this.onErase,
-    this.onRestore,
+    this.canUndo = false,
+    this.canRedo = false,
   });
 
   final VoidCallback? onUndo;
   final VoidCallback? onRedo;
-  final VoidCallback? onErase;
-  final VoidCallback? onRestore;
+  final bool canUndo;
+  final bool canRedo;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          ToolbarButton(icon: Icons.undo, onPressed: onUndo, isEnabled: false),
-          ToolbarButton(icon: Icons.redo, onPressed: onRedo, isEnabled: false),
           ToolbarButton(
-            icon: Icons.brush,
-            onPressed: onErase,
-            isEnabled: false,
+            icon: Icons.undo,
+            onPressed: onUndo,
+            isEnabled: canUndo,
           ),
+          const SizedBox(width: 24),
           ToolbarButton(
-            icon: Icons.restore,
-            onPressed: onRestore,
-            isEnabled: false,
+            icon: Icons.redo,
+            onPressed: onRedo,
+            isEnabled: canRedo,
           ),
         ],
       ),

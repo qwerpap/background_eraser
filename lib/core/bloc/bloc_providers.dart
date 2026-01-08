@@ -3,12 +3,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:talker_flutter/talker_flutter.dart';
+import 'package:dio/dio.dart';
 
 import '../navigation/presentation/cubit/navigation_cubit.dart';
 import '../navigation/data/constants/navigation_constants.dart';
 import '../shared/widgets/cubit/button_animation_cubit.dart';
 import '../shared/widgets/cubit/snackbar_cubit.dart';
 import '../../features/home/bloc/home_bloc.dart';
+import '../../features/eraser/bloc/eraser_cubit.dart';
+import '../../features/eraser/data/datasources/remove_bg_remote_datasource.dart';
+import '../../features/eraser/data/repositories/remove_bg_repository_impl.dart';
+import '../../features/eraser/domain/repositories/remove_bg_repository.dart';
+import '../../features/eraser/domain/usecases/remove_background_usecase.dart';
+import '../../constants/api_constants.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -21,6 +28,7 @@ class BlocProviders {
     _registerButtonAnimationCubit();
     _registerSnackbarCubit();
     _registerHomeBloc();
+    _registerEraserCubit();
     // TODO: Add history and separation when features are ready
     // _registerHistory();
     // _registerSeparation();
@@ -52,6 +60,42 @@ class BlocProviders {
   static void _registerHomeBloc() {
     getIt.registerLazySingleton<HomeBloc>(
       () => HomeBloc(),
+    );
+  }
+
+  static void _registerEraserCubit() {
+    getIt.registerLazySingleton<Dio>(
+      () => Dio(BaseOptions(
+        baseUrl: ApiConstants.removeBgBaseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+      )),
+      instanceName: 'removeBgDio',
+    );
+
+    getIt.registerFactory<RemoveBgRemoteDataSource>(
+      () => RemoveBgRemoteDataSource(
+        dio: getIt<Dio>(instanceName: 'removeBgDio'),
+        talker: getIt<Talker>(),
+      ),
+    );
+
+    getIt.registerFactory<RemoveBgRepository>(
+      () => RemoveBgRepositoryImpl(
+        getIt<RemoveBgRemoteDataSource>(),
+      ),
+    );
+
+    getIt.registerFactory<RemoveBackgroundUseCase>(
+      () => RemoveBackgroundUseCase(
+        getIt<RemoveBgRepository>(),
+      ),
+    );
+
+    getIt.registerFactory<EraserCubit>(
+      () => EraserCubit(
+        getIt<RemoveBackgroundUseCase>(),
+      ),
     );
   }
 
@@ -107,6 +151,9 @@ class BlocProviders {
         ),
         BlocProvider<SnackbarCubit>.value(
           value: getIt<SnackbarCubit>(),
+        ),
+        BlocProvider<EraserCubit>(
+          create: (_) => getIt<EraserCubit>(),
         ),
         // TODO: Add when features are ready
         // BlocProvider(
