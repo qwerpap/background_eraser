@@ -36,7 +36,7 @@ class PhotoLocalDataSource {
   Future<List<PhotoModel>> getAllPhotos() async {
     try {
       final photosDir = await _getPhotosDirectory();
-      
+
       if (!await photosDir.exists()) {
         return [];
       }
@@ -76,8 +76,8 @@ class PhotoLocalDataSource {
     try {
       final file = File(photo.imagePath);
       if (await file.exists()) {
-        getIt<Talker>().info('Photo metadata saved: ${photo.id}');
-        return photo;
+      getIt<Talker>().info('Photo metadata saved: ${photo.id}');
+      return photo;
       } else {
         throw Exception('Photo file does not exist: ${photo.imagePath}');
       }
@@ -98,7 +98,7 @@ class PhotoLocalDataSource {
       final file = File(photo.imagePath);
       if (await file.exists()) {
         await file.delete();
-        getIt<Talker>().info('Photo deleted: $photoId');
+      getIt<Talker>().info('Photo deleted: $photoId');
       } else {
         getIt<Talker>().warning('Photo file does not exist: ${photo.imagePath}');
       }

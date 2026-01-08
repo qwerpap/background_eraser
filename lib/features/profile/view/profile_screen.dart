@@ -37,8 +37,8 @@ class ProfileScreen extends StatelessWidget {
           },
           (_) {
             context.read<HomeBloc>().add(const HomeLoadPhotos());
-            CustomSnackbar.show(
-              context: context,
+        CustomSnackbar.show(
+          context: context,
               message: 'All images cleared successfully',
             );
           },

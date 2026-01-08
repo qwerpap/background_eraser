@@ -25,7 +25,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }) : _getRecentErasedImagesUseCase = getRecentErasedImagesUseCase,
        _saveErasedImageUseCase = saveErasedImageUseCase,
        _talker = talker,
-       super(const HomeInitial()) {
+        super(const HomeInitial()) {
     on<HomeLoadPhotos>(_onLoadPhotos);
     on<HomeImageSourceSelected>(_onImageSourceSelected);
     on<HomeSavePhoto>(_onSavePhoto);
@@ -69,7 +69,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       },
       (erasedImages) {
         final photos = erasedImages.map(_erasedImageToPhotoModel).toList();
-        emit(HomeLoaded(photos));
+      emit(HomeLoaded(photos));
       },
     );
   }
@@ -88,7 +88,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   ) async {
     // Не показываем loading при выборе источника фото
     // Сохраняем текущее состояние, чтобы фото не скрывались
-
+    
     try {
       File? image;
 
