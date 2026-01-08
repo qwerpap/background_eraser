@@ -28,16 +28,15 @@ class CustomSnackbar extends StatelessWidget {
         if (!state.isVisible || state.message == null) {
           return const SizedBox.shrink();
         }
+        final bottomNavHeight = 120.0;
+        final snackbarOffset = 24.0; // Отступ между snackbar и навигацией
 
         return Positioned(
-          bottom: 100,
+          bottom: bottomNavHeight + snackbarOffset,
           left: 24,
           right: 24,
           child: TweenAnimationBuilder<double>(
-            tween: Tween<double>(
-              begin: 0.0,
-              end: state.isVisible ? 1.0 : 0.0,
-            ),
+            tween: Tween<double>(begin: 0.0, end: state.isVisible ? 1.0 : 0.0),
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutBack,
             builder: (context, value, child) {
@@ -73,10 +72,11 @@ class CustomSnackbar extends StatelessWidget {
                         Expanded(
                           child: Text(
                             state.message!,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.whiteColor,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: AppColors.whiteColor,
+                                  fontWeight: FontWeight.w500,
+                                ),
                           ),
                         ),
                         GestureDetector(
@@ -99,4 +99,3 @@ class CustomSnackbar extends StatelessWidget {
     );
   }
 }
-

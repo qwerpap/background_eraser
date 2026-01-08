@@ -8,6 +8,7 @@ import '../navigation/presentation/cubit/navigation_cubit.dart';
 import '../navigation/data/constants/navigation_constants.dart';
 import '../shared/widgets/cubit/button_animation_cubit.dart';
 import '../shared/widgets/cubit/snackbar_cubit.dart';
+import '../../features/home/bloc/home_bloc.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -19,6 +20,7 @@ class BlocProviders {
     _registerNavigationCubit();
     _registerButtonAnimationCubit();
     _registerSnackbarCubit();
+    _registerHomeBloc();
     // TODO: Add history and separation when features are ready
     // _registerHistory();
     // _registerSeparation();
@@ -44,6 +46,12 @@ class BlocProviders {
   static void _registerSnackbarCubit() {
     getIt.registerSingleton<SnackbarCubit>(
       SnackbarCubit(),
+    );
+  }
+
+  static void _registerHomeBloc() {
+    getIt.registerLazySingleton<HomeBloc>(
+      () => HomeBloc(),
     );
   }
 
@@ -93,6 +101,12 @@ class BlocProviders {
         BlocProvider<NavigationCubit>(
           create: (_) =>
               getIt<NavigationCubit>(param1: location, param2: dark),
+        ),
+        BlocProvider<HomeBloc>.value(
+          value: getIt<HomeBloc>(),
+        ),
+        BlocProvider<SnackbarCubit>.value(
+          value: getIt<SnackbarCubit>(),
         ),
         // TODO: Add when features are ready
         // BlocProvider(

@@ -6,7 +6,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import 'dart:io';
 import 'dart:typed_data';
 
-import '../../../../features/home/view/home_screen.dart';
+import '../../../../features/home/presentation/view/home_screen.dart';
 import '../../../../features/eraser/view/eraser_screen.dart';
 import '../../../../features/profile/view/profile_screen.dart';
 import '../../../bloc/bloc_providers.dart';

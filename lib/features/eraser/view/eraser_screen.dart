@@ -2,11 +2,15 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:background_eraser/core/shared/widgets/custom_scaffold.dart';
 import 'package:background_eraser/core/theme/app_colors.dart';
 import 'package:background_eraser/features/eraser/widgets/eraser_app_bar.dart';
 import 'package:background_eraser/features/eraser/widgets/toolbar.dart';
 import 'package:background_eraser/features/eraser/widgets/bottom_action_panel.dart';
+import 'package:background_eraser/features/home/bloc/home_bloc.dart';
+import 'package:background_eraser/features/home/bloc/home_event.dart';
 
 enum EraserScreenState { idle, processing, result }
 
@@ -51,7 +55,17 @@ class _EraserScreenState extends State<EraserScreen> {
   }
 
   void _handleSave() {
-    // TODO: Add save logic
+    final imageFile = widget.imageFile;
+    if (imageFile != null) {
+      context.read<HomeBloc>().add(HomeSavePhoto(imageFile));
+      // Navigate back to home after saving
+      // Список фото обновится автоматически через listener в HomeScreen
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/');
+      }
+    }
   }
 
   bool get _hasRemovedBackground => _state == EraserScreenState.result;
@@ -60,29 +74,32 @@ class _EraserScreenState extends State<EraserScreen> {
     Widget imageWidget;
 
     if (widget.imageFile != null) {
-      imageWidget = Image.file(widget.imageFile!, fit: BoxFit.contain);
+      imageWidget = Image.file(
+        widget.imageFile!,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+      );
     } else if (widget.imageBytes != null) {
-      imageWidget = Image.memory(widget.imageBytes!, fit: BoxFit.contain);
+      imageWidget = Image.memory(
+        widget.imageBytes!,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+      );
     } else if (widget.useMockImage) {
       // Mock image for testing
-      imageWidget = Image.asset('assets/png/blank.png', fit: BoxFit.contain);
+      imageWidget = Image.asset(
+        'assets/png/blank.png',
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+      );
     } else {
       imageWidget = const Center(child: Text('No image provided'));
     }
 
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: AppColors.white018Color,
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: imageWidget,
-        ),
-      ),
-    );
+    return imageWidget;
   }
 
   Widget _buildProcessingOverlay() {
@@ -125,20 +142,15 @@ class _EraserScreenState extends State<EraserScreen> {
                 ),
               ),
               const Toolbar(),
+              BottomActionPanel(
+                onRemoveBackground: _state == EraserScreenState.idle
+                    ? _handleRemoveBackground
+                    : null,
+                onSave: _hasRemovedBackground ? _handleSave : null,
+                isProcessing: _state == EraserScreenState.processing,
+                hasRemovedBackground: _hasRemovedBackground,
+              ),
             ],
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: BottomActionPanel(
-              onRemoveBackground: _state == EraserScreenState.idle
-                  ? _handleRemoveBackground
-                  : null,
-              onSave: _hasRemovedBackground ? _handleSave : null,
-              isProcessing: _state == EraserScreenState.processing,
-              hasRemovedBackground: _hasRemovedBackground,
-            ),
           ),
           if (_state == EraserScreenState.processing) _buildProcessingOverlay(),
         ],

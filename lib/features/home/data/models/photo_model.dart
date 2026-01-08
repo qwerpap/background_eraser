@@ -11,6 +11,22 @@ class PhotoModel extends Equatable {
     required this.createdAt,
   });
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'imagePath': imagePath,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+
+  factory PhotoModel.fromJson(Map<String, dynamic> json) {
+    return PhotoModel(
+      id: json['id'] as String,
+      imagePath: json['imagePath'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
+  }
+
   @override
   List<Object> get props => [id, imagePath, createdAt];
 }
