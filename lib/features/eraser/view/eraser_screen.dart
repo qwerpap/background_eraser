@@ -240,18 +240,18 @@ class _EraserScreenState extends State<EraserScreen> {
           final canRedo = cubit.canRedo;
           final hasNoImage = _hasNoImage();
 
-          return CustomScaffold(
-            body: Stack(
-              children: [
-                Column(
-                  children: [
-                    EraserAppBar(onReset: _handleReset),
-                    Expanded(
-                      child: Container(
-                        color: AppColors.white018Color,
+    return CustomScaffold(
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              EraserAppBar(onReset: _handleReset),
+              Expanded(
+                child: Container(
+                  color: AppColors.white018Color,
                         child: _buildImage(state),
-                      ),
-                    ),
+                ),
+              ),
                     if (!hasNoImage)
                       Toolbar(
                         onUndo: _handleUndo,
@@ -260,19 +260,19 @@ class _EraserScreenState extends State<EraserScreen> {
                         canRedo: canRedo,
                       ),
                     if (!hasNoImage)
-                      BottomActionPanel(
+              BottomActionPanel(
                         onRemoveBackground:
                             (state is EraserInitial || state is EraserError)
-                            ? _handleRemoveBackground
-                            : null,
+                    ? _handleRemoveBackground
+                    : null,
                         onSave: hasRemovedBackground ? _handleSave : null,
                         isProcessing: isProcessing,
                         hasRemovedBackground: hasRemovedBackground,
-                      ),
-                  ],
-                ),
+              ),
+            ],
+          ),
                 if (isProcessing) _buildProcessingOverlay(),
-              ],
+        ],
             ),
           );
         },
