@@ -37,4 +37,5 @@ flutter:
   fonts:
     - family: Rubik
       fonts:
-        - asset: assetsfonts/Rubik-Medium.ttf
+        - asset: assets/fonts/Rubik-Medium.ttf
+          weight: 500

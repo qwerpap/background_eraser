@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../navigation/presentation/cubit/navigation_cubit.dart';
+import '../navigation/data/constants/navigation_constants.dart';
+import '../shared/widgets/cubit/button_animation_cubit.dart';
+import '../shared/widgets/cubit/snackbar_cubit.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -14,6 +17,8 @@ class BlocProviders {
   static void setup() {
     _registerTalker();
     _registerNavigationCubit();
+    _registerButtonAnimationCubit();
+    _registerSnackbarCubit();
     // TODO: Add history and separation when features are ready
     // _registerHistory();
     // _registerSeparation();
@@ -27,6 +32,18 @@ class BlocProviders {
     getIt.registerFactoryParam<NavigationCubit, String, bool>(
       (currentLocation, isDark) =>
           NavigationCubit(currentLocation: currentLocation, isDark: isDark),
+    );
+  }
+
+  static void _registerButtonAnimationCubit() {
+    getIt.registerFactory<ButtonAnimationCubit>(
+      () => ButtonAnimationCubit(),
+    );
+  }
+
+  static void _registerSnackbarCubit() {
+    getIt.registerSingleton<SnackbarCubit>(
+      SnackbarCubit(),
     );
   }
 
@@ -50,16 +67,32 @@ class BlocProviders {
   static Widget wrapWithProviders({
     required BuildContext context,
     required Widget child,
+    String? currentLocation,
+    bool? isDark,
   }) {
-    final currentLocation = GoRouterState.of(context).uri.path;
-    final brightness = MediaQuery.platformBrightnessOf(context);
-    final isDark = brightness == Brightness.dark;
+    // Try to get GoRouterState, fallback to defaults if not available
+    String location;
+    bool dark;
+    
+    try {
+      final routerState = GoRouterState.of(context);
+      location = routerState.uri.path;
+    } catch (e) {
+      location = currentLocation ?? NavigationConstants.home;
+    }
+    
+    try {
+      final brightness = MediaQuery.platformBrightnessOf(context);
+      dark = brightness == Brightness.dark;
+    } catch (e) {
+      dark = isDark ?? false;
+    }
 
     return MultiBlocProvider(
       providers: [
         BlocProvider<NavigationCubit>(
           create: (_) =>
-              getIt<NavigationCubit>(param1: currentLocation, param2: isDark),
+              getIt<NavigationCubit>(param1: location, param2: dark),
         ),
         // TODO: Add when features are ready
         // BlocProvider(

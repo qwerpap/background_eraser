@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../data/constants/bottom_navigation_constants.dart';
 import '../../data/constants/bottom_navigation_ui_constants.dart';
 import '../../data/constants/navigation_colors.dart';
@@ -29,6 +30,7 @@ class CustomBottomNavigation extends StatelessWidget {
             ),
             child: Container(
               decoration: BoxDecoration(
+                gradient: AppColors.bottomNavColor,
                 borderRadius: BorderRadius.circular(
                   BottomNavigationUIConstants.borderRadius,
                 ),
@@ -40,6 +42,10 @@ class CustomBottomNavigation extends StatelessWidget {
                     spreadRadius: 0,
                   ),
                 ],
+                border: Border.all(
+                  color: NavigationColors.getBorderColor(state.isDark),
+                  width: NavigationColors.getBorderWidth(state.isDark),
+                ),
               ),
               child: LiquidGlassLayer(
                 settings: glassSettings,
@@ -52,10 +58,6 @@ class CustomBottomNavigation extends StatelessWidget {
                       borderRadius: BorderRadius.circular(
                         BottomNavigationUIConstants.borderRadius,
                       ),
-                      border: Border.all(
-                        color: NavigationColors.getBorderColor(state.isDark),
-                        width: NavigationColors.getBorderWidth(state.isDark),
-                      ),
                     ),
                     child: GlassGlow(
                       glowColor: NavigationColors.getGlassGlowColor(),
@@ -63,20 +65,26 @@ class CustomBottomNavigation extends StatelessWidget {
                           BottomNavigationUIConstants.indicatorGlowRadius,
                       child: GestureDetector(
                         onPanStart: (details) {
-                          final box = cubit.containerKey.currentContext
-                              ?.findRenderObject() as RenderBox?;
+                          final box =
+                              cubit.containerKey.currentContext
+                                      ?.findRenderObject()
+                                  as RenderBox?;
                           if (box != null) {
-                            final localPosition =
-                                box.globalToLocal(details.globalPosition);
+                            final localPosition = box.globalToLocal(
+                              details.globalPosition,
+                            );
                             cubit.startDrag(localPosition);
                           }
                         },
                         onPanUpdate: (details) {
-                          final box = cubit.containerKey.currentContext
-                              ?.findRenderObject() as RenderBox?;
+                          final box =
+                              cubit.containerKey.currentContext
+                                      ?.findRenderObject()
+                                  as RenderBox?;
                           if (box != null) {
-                            final localPosition =
-                                box.globalToLocal(details.globalPosition);
+                            final localPosition = box.globalToLocal(
+                              details.globalPosition,
+                            );
                             cubit.updateDrag(localPosition, box.size);
                           }
                         },
@@ -122,8 +130,8 @@ class _NavigationContent extends StatelessWidget {
       return false;
     }
 
-    final box = cubit.containerKey.currentContext
-        ?.findRenderObject() as RenderBox?;
+    final box =
+        cubit.containerKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null) {
       return false;
     }
@@ -138,41 +146,41 @@ class _NavigationContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-        return RepaintBoundary(
-          child: Container(
-            key: cubit.containerKey,
-            padding: const EdgeInsets.symmetric(
+    return RepaintBoundary(
+      child: Container(
+        key: cubit.containerKey,
+        padding: const EdgeInsets.symmetric(
           horizontal: BottomNavigationUIConstants.containerHorizontalPadding,
-            ),
-            height: BottomNavigationUIConstants.barHeight,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final itemWidth =
-                    constraints.maxWidth /
-                    BottomNavigationConstants.navigationItems.length;
+        ),
+        height: BottomNavigationUIConstants.barHeight,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final itemWidth =
+                constraints.maxWidth /
+                BottomNavigationConstants.navigationItems.length;
 
-                return ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: BottomNavigationConstants.navigationItems.length,
-                  itemExtent: itemWidth,
-                  itemBuilder: (context, index) {
+            return ListView.builder(
+              scrollDirection: Axis.horizontal,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: BottomNavigationConstants.navigationItems.length,
+              itemExtent: itemWidth,
+              itemBuilder: (context, index) {
                 final item = BottomNavigationConstants.navigationItems[index];
-                    final isSelected = index == currentIndex;
+                final isSelected = index == currentIndex;
                 final showIndicator = isSelected || _shouldShowIndicator(index);
 
-                    return _NavigationItem(
-                      item: item,
-                      isSelected: isSelected,
-                      showIndicator: showIndicator,
-                      onTap: () => cubit.navigateToRoute(context, item.route),
-                    );
-                  },
+                return _NavigationItem(
+                  item: item,
+                  isSelected: isSelected,
+                  showIndicator: showIndicator,
+                  onTap: () => cubit.navigateToRoute(context, item.route),
                 );
               },
-            ),
-          ),
+            );
+          },
+        ),
+      ),
     );
   }
 }
@@ -245,6 +253,7 @@ class _NavigationItem extends StatelessWidget {
                     color: iconColor,
                     fontSize: BottomNavigationUIConstants.fontSize,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    decoration: TextDecoration.none,
                   ),
                 ),
               ],

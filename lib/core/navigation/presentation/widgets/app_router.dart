@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import 'dart:io';
+import 'dart:typed_data';
+
 import '../../../../features/home/view/home_screen.dart';
 import '../../../../features/eraser/view/eraser_screen.dart';
 import '../../../../features/profile/view/profile_screen.dart';
@@ -30,13 +33,6 @@ class AppRouter {
             ),
           ),
           GoRoute(
-            path: NavigationConstants.eraser,
-            pageBuilder: (context, state) => PageTransitions.fadeTransition(
-              child: const EraserScreen(),
-              state: state,
-            ),
-          ),
-          GoRoute(
             path: NavigationConstants.profile,
             pageBuilder: (context, state) => PageTransitions.fadeTransition(
               child: const ProfileScreen(),
@@ -51,6 +47,40 @@ class AppRouter {
             ),
           ),
         ],
+      ),
+      GoRoute(
+        path: NavigationConstants.eraser,
+        pageBuilder: (context, state) {
+          File? imageFile;
+          Uint8List? imageBytes;
+          bool useMockImage = false;
+
+          if (state.extra != null) {
+            if (state.extra is File) {
+              imageFile = state.extra as File;
+            } else if (state.extra is Uint8List) {
+              imageBytes = state.extra as Uint8List;
+            } else if (state.extra is bool) {
+              useMockImage = state.extra as bool;
+            }
+          } else {
+            // Use mock image if no image provided
+            useMockImage = true;
+          }
+
+          return PageTransitions.fadeTransition(
+            child: BlocProviders.wrapWithProviders(
+              context: context,
+              currentLocation: state.uri.path,
+              child: EraserScreen(
+                imageFile: imageFile,
+                imageBytes: imageBytes,
+                useMockImage: useMockImage,
+              ),
+            ),
+            state: state,
+          );
+        },
       ),
     ],
   );
@@ -140,18 +170,16 @@ class _NavigationStateUpdaterState extends State<_NavigationStateUpdater> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          widget.child,
-          const Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: CustomBottomNavigation(),
-          ),
-        ],
-      ),
+    return Stack(
+      children: [
+        widget.child,
+        const Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: CustomBottomNavigation(),
+        ),
+      ],
     );
   }
 }

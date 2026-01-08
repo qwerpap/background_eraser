@@ -1,47 +1,49 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color whiteColor = Colors.white;
-  static const Color blackColor = Color.fromRGBO(45, 55, 72, 1);
+  static const Color whiteColor = Color(0xFFF4F4F4);
+  static const Color white210Color = Color(0xFFD2D2D2);
+  static const Color white018Color = Color(0x2EFFFFFF);
+  static const Color white032Color = Color(0x52FFFFFF);
 
-  // Primary
-  static const Color primaryColor = Color(0xFF6C5CE7);
-  // Primary variants with common opacities used in UI (precomputed ARGB to avoid runtime math).
-  static const Color primaryColor06 = Color.fromARGB(15, 108, 92, 231); // 0.06
-  static const Color primaryColor10 = Color.fromARGB(26, 108, 92, 231); // 0.10
-  static const Color primaryColor12 = Color.fromARGB(31, 108, 92, 231); // 0.12
-  static const Color primaryColor50 = Color.fromARGB(128, 108, 92, 231); // 0.50
+  static const Color primary = Colors.white;
+  static const Color secondary = whiteColor;
 
-  // Neutrals / Greys
-  static const Color greyColor = Color.fromRGBO(121, 129, 143, 1);
-  static const Color lightGreyColor = Color.fromRGBO(243, 243, 243, 1);
+  static const orangeColor = Color(0xFFFA454D);
+  static const redColor = Color(0xFFFA454D);
+  static const pinkColor = Color(0xFFDB0082);
+  static const yellowColor = Color(0xFFDBDC69);
+  static const lemonColor = Color(0xFFDBDC69);
 
-  static const Color greenColor = Color.fromRGBO(103, 209, 197, 1);
-  static const Color vocalsAccent = Color(0xFFE74C3C);
-  static const Color vocalsBg = Color(0xFFFFEAEA);
-  static const Color drumsAccent = Color(0xFF4C7DFF);
-  static const Color drumsBg = Color(0xFFE8EFFF);
-  static const Color bassAccent = greenColor;
-  static const Color bassBg = Color(0xFFEAF8F5);
-  static const Color otherAccent = greyColor;
-  static const Color otherBg = Color(0xFFF2F3F5);
+  static const aquaColor = Color(0xFF68CDD2);
 
-  // Цвета для музыки/аккомпанемента
-  static const Color musicAccent = Color(0xFF9C27B0); // Фиолетовый
-  static const Color musicBg = Color(0xFFF3E5F5); // Светло-фиолетовый
+  static const navActiveColor = Color(0xFF68CDD2);
+  static const navInactiveColor = AppColors.whiteColor;
 
-  static const Color whiteColor26 = Color.fromARGB(66, 255, 255, 255); // 0.26
-  static const Color whiteColor06 = Color.fromARGB(15, 255, 255, 255); // 0.06
+  static final buttonColor = LinearGradient(colors: [pinkColor, orangeColor]);
 
-  static const Color shadowBlack12 = Color.fromARGB(31, 0, 0, 0); // 0.12
+  static final scaffoldColor = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF02132D), Color(0xFF3E161E)],
+  );
 
-  static const Color scaffoldBgColor = Color.fromRGBO(249, 250, 251, 1);
+  static final bottomNavColor = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF5B2E37), Color(0xFF02132D)],
+  );
 
-  // Modern colors for silent tracks
-  static const Color silentTrackBg = Color(
-    0xFFF1F5F9,
-  ); // Soft blue-gray background
-  static const Color silentTrackBorder = Color(0xFFCBD5E1); // Subtle border
-  static const Color silentTrackIcon = Color(0xFF64748B); // Muted icon color
-  static const Color silentTrackText = Color(0xFF64748B); // Muted text color
+  static final editPhotoBtnColor = LinearGradient(
+    begin: Alignment.bottomCenter,
+    end: Alignment.topCenter,
+    colors: [Color(0xFF6C2F3B), Color(0xFF4F4F95)],
+    stops: [0.3, 1],
+  );
+
+  // Slider colors
+  static const Color sliderActiveColor = Color(0xFFDB0082);
+  static const Color sliderInactiveColor = Color(0x2EFFFFFF);
+  static const Color sliderThumbColor = Colors.white;
+  static const Color sliderValueColor = Colors.white;
 }
