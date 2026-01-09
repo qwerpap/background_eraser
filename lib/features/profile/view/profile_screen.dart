@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:background_eraser/core/shared/widgets/custom_scaffold.dart';
 import 'package:background_eraser/core/shared/widgets/custom_popup.dart';
 import 'package:background_eraser/core/shared/widgets/custom_snackbar.dart';
 import 'package:background_eraser/core/shared/widgets/cubit/snackbar_cubit.dart';
 import 'package:background_eraser/core/bloc/bloc_providers.dart';
+import 'package:background_eraser/core/navigation/data/constants/navigation_constants.dart';
+import 'package:background_eraser/core/subscription/apphud_service.dart';
 import 'package:background_eraser/features/profile/widgets/profile_app_bar.dart';
 import 'package:background_eraser/features/profile/widgets/profile_settings_card.dart';
 import 'package:background_eraser/features/profile/widgets/profile_info_card.dart';
@@ -61,6 +64,35 @@ class ProfileScreen extends StatelessWidget {
                   const ProfileAppBar(title: 'Profile'),
                   Padding(
                     padding: const EdgeInsets.only(top: 40, bottom: 20),
+                    child: Column(
+                      children: [
+                        ProfileSettingsCard(
+                          title: 'Premium',
+                          icon: Icons.star,
+                          subtitle: 'Unlock all features',
+                          onTap: () {
+                            context.push(NavigationConstants.paywall);
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        ProfileActionCard(
+                          title: 'Reset Premium (Test)',
+                          icon: Icons.refresh,
+                          onPressed: () {
+                            final appHudService = getIt<AppHudService>();
+                            appHudService.resetTestSubscription();
+                            CustomSnackbar.show(
+                              context: context,
+                              message: 'Premium status reset. Ads will be shown now.',
+                            );
+                          },
+                          isDanger: false,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
                     child: ProfileSettingsCard(
                       title: 'App Information',
                       icon: Icons.info_outline,

@@ -9,7 +9,10 @@ import 'dart:typed_data';
 import '../../../../features/home/presentation/view/home_screen.dart';
 import '../../../../features/eraser/view/eraser_screen.dart';
 import '../../../../features/profile/view/profile_screen.dart';
+import '../../../../features/paywall/view/paywall_screen.dart';
 import '../../../bloc/bloc_providers.dart';
+import '../../../services/analytics/analytics_service.dart';
+import '../../../subscription/apphud_service.dart';
 import '../../data/constants/navigation_constants.dart';
 import '../../data/utils/page_transitions.dart';
 import '../cubit/navigation_cubit.dart';
@@ -43,6 +46,17 @@ class AppRouter {
             path: NavigationConstants.logs,
             pageBuilder: (context, state) => PageTransitions.slideTransition(
               child: TalkerScreen(talker: getIt<Talker>()),
+              state: state,
+            ),
+          ),
+          GoRoute(
+            path: NavigationConstants.paywall,
+            pageBuilder: (context, state) => PageTransitions.slideTransition(
+              child: BlocProviders.wrapWithProviders(
+                context: context,
+                currentLocation: state.uri.path,
+                child: const PaywallScreen(),
+              ),
               state: state,
             ),
           ),
@@ -125,6 +139,7 @@ class _NavigationStateUpdaterState extends State<_NavigationStateUpdater> {
     if (_lastLocation != newLocation) {
       cubit.updateCurrentRoute(newLocation);
       _lastLocation = newLocation;
+      _logScreenView(newLocation);
     }
     if (_lastBrightness != newBrightness) {
       cubit.updateTheme(newIsDark);
@@ -132,14 +147,43 @@ class _NavigationStateUpdaterState extends State<_NavigationStateUpdater> {
     }
   }
 
+  Future<void> _logScreenView(String screenName) async {
+    final analyticsService = getIt<AnalyticsService>();
+    final appHudService = getIt<AppHudService>();
+    final isPremium = await appHudService.isPremium();
+    
+    analyticsService.logEvent(
+      'screen_view',
+      {
+        'screen_name': screenName,
+        'is_premium': isPremium,
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateNavigationState();
+      _logAppOpen();
     });
 
     AppRouter.router.routerDelegate.addListener(_onRouterChanged);
+  }
+
+  Future<void> _logAppOpen() async {
+    final analyticsService = getIt<AnalyticsService>();
+    final appHudService = getIt<AppHudService>();
+    final isPremium = await appHudService.isPremium();
+    
+    analyticsService.logEvent(
+      'app_open',
+      {
+        'source_screen': GoRouterState.of(context).uri.path,
+        'is_premium': isPremium,
+      },
+    );
   }
 
   @override
