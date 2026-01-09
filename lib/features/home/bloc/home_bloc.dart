@@ -186,13 +186,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
             );
           }
         },
-        (_) {
+        (_) async {
           _talker.info('Photo saved successfully');
-          _analyticsService.logEvent(
+          final isPremium = await _appHudService.isPremium();
+          await _analyticsService.logEvent(
             'save_image',
             {
               'source_screen': 'home',
-              'is_premium': false,
+              'is_premium': isPremium,
             },
           );
         },

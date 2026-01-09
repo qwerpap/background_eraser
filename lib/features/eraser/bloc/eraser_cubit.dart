@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:background_eraser/core/domain/errors/failure.dart';
 import 'package:background_eraser/core/services/analytics/analytics_service.dart';
 import 'package:background_eraser/core/services/ads/admob_service.dart';
+import 'package:background_eraser/core/subscription/apphud_service.dart';
 import 'package:background_eraser/features/eraser/bloc/eraser_state.dart';
 import 'package:background_eraser/features/eraser/domain/usecases/remove_background_usecase.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -12,6 +13,7 @@ class EraserCubit extends Cubit<EraserState> {
   final Talker _talker;
   final AnalyticsService _analyticsService;
   final AdMobService _adMobService;
+  final AppHudService _appHudService;
   File? _originalImage;
   File? _processedImage;
 
@@ -20,6 +22,7 @@ class EraserCubit extends Cubit<EraserState> {
     this._talker,
     this._analyticsService,
     this._adMobService,
+    this._appHudService,
   ) : super(const EraserInitial());
 
   void reset() {
@@ -38,11 +41,12 @@ class EraserCubit extends Cubit<EraserState> {
     _originalImage = image;
     emit(const EraserLoading());
 
+    final isPremium = await _appHudService.isPremium();
     await _analyticsService.logEvent(
       'remove_bg_started',
       {
         'source_screen': 'eraser',
-        'is_premium': false,
+        'is_premium': isPremium,
       },
     );
 
@@ -54,7 +58,7 @@ class EraserCubit extends Cubit<EraserState> {
         _talker.error('Failed to remove background: $errorMessage');
         emit(EraserError(errorMessage));
       },
-      (processedImage) {
+      (processedImage) async {
         if (_originalImage == null) {
           _talker.error('Original image not set before processing');
           emit(const EraserError('Internal error: original image not set'));
@@ -62,11 +66,15 @@ class EraserCubit extends Cubit<EraserState> {
         }
         _processedImage = processedImage;
         _talker.info('Background removed successfully: ${processedImage.path}');
-        _analyticsService.logEvent(
+        
+        // Получаем реальный статус premium
+        final isPremium = await _appHudService.isPremium();
+        
+        await _analyticsService.logEvent(
           'remove_bg_success',
           {
             'source_screen': 'eraser',
-            'is_premium': false,
+            'is_premium': isPremium,
           },
         );
         emit(
@@ -76,8 +84,8 @@ class EraserCubit extends Cubit<EraserState> {
           ),
         );
         // Показываем рекламу после успешного удаления фона
-        _talker.debug('Calling showInterstitialAd after remove_bg_success');
-        _adMobService.showInterstitialAd();
+        _talker.debug('EraserCubit: Attempting to show interstitial ad after background removal');
+        await _adMobService.showInterstitialAd();
       },
     );
   }

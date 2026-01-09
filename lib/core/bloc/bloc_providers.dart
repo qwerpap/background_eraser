@@ -204,6 +204,7 @@ class BlocProviders {
         getIt<Talker>(),
         getIt<AnalyticsService>(),
         getIt<AdMobService>(),
+        getIt<AppHudService>(),
       ),
     );
   }

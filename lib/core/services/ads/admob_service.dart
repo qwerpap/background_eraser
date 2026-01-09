@@ -16,6 +16,7 @@ class AdMobService {
   RewardedAd? _rewardedAd;
   bool _isInterstitialReady = false;
   bool _isRewardedReady = false;
+  bool _isInterstitialShowing = false;
   static const String _interstitialAdUnitId = 'ca-app-pub-3940256099942544/1033173712'; // Test ID
   static const String _rewardedAdUnitId = 'ca-app-pub-3940256099942544/5224354917'; // Test ID
   static const String _bannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111'; // Test ID
@@ -81,6 +82,7 @@ class AdMobService {
     _interstitialAd?.fullScreenContentCallback = FullScreenContentCallback(
       onAdShowedFullScreenContent: (ad) {
         _talker.debug('InterstitialAd showed');
+        _isInterstitialShowing = true;
         _analyticsService.logEvent(
           'ad_shown',
           {
@@ -91,6 +93,7 @@ class AdMobService {
       },
       onAdDismissedFullScreenContent: (ad) {
         _talker.debug('InterstitialAd dismissed');
+        _isInterstitialShowing = false;
         ad.dispose();
         _interstitialAd = null;
         _isInterstitialReady = false;
@@ -98,6 +101,7 @@ class AdMobService {
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
         _talker.error('InterstitialAd failed to show: ${error.message}', error);
+        _isInterstitialShowing = false;
         ad.dispose();
         _interstitialAd = null;
         _isInterstitialReady = false;
@@ -136,17 +140,57 @@ class AdMobService {
         return false;
       }
 
-      _talker.debug('Ad ready status: $_isInterstitialReady, ad exists: ${_interstitialAd != null}');
+      _talker.debug('Ad ready status: $_isInterstitialReady, ad exists: ${_interstitialAd != null}, is showing: $_isInterstitialShowing');
+      
+      // Если реклама уже показывается, не показываем снова
+      if (_isInterstitialShowing) {
+        _talker.debug('Ad is already showing, skipping');
+        return false;
+      }
+      
       if (!_isInterstitialReady || _interstitialAd == null) {
         _talker.debug('Ad not ready, loading new ad');
         _loadInterstitialAd();
         return false;
       }
 
+      // Проверяем и устанавливаем колбэки перед показом
+      if (_interstitialAd!.fullScreenContentCallback == null) {
+        _talker.debug('Callbacks not set, setting them now');
+        _setupInterstitialCallbacks();
+      } else {
+        _talker.debug('Callbacks are already set');
+      }
+
       _talker.debug('Showing InterstitialAd...');
-      await _interstitialAd!.show();
-      _talker.debug('InterstitialAd.show() called successfully');
-      return true;
+      _talker.debug('Ad hash: ${_interstitialAd.hashCode}, callbacks: ${_interstitialAd!.fullScreenContentCallback != null}');
+      
+      // Сохраняем ссылку на рекламу перед показом
+      final adToShow = _interstitialAd!;
+      
+      // Сбрасываем флаг готовности, чтобы не показать рекламу дважды
+      _isInterstitialReady = false;
+      _interstitialAd = null; // Освобождаем ссылку, чтобы можно было загрузить новую рекламу
+      
+      try {
+        // Вызываем show() без await, чтобы не блокировать выполнение
+        adToShow.show();
+        _talker.debug('InterstitialAd.show() called successfully');
+        
+        // Реклама будет перезагружена в колбэке onAdDismissedFullScreenContent или onAdFailedToShowFullScreenContent
+        // Сразу загружаем новую рекламу для следующего раза
+        _loadInterstitialAd();
+        
+        return true;
+      } catch (showError, stackTrace) {
+        _talker.error('Error calling show(): $showError', showError, stackTrace);
+        _isInterstitialShowing = false;
+        // Если ошибка при показе, сбрасываем состояние и перезагружаем
+        adToShow.dispose();
+        _isInterstitialReady = false;
+        _loadInterstitialAd();
+        return false;
+      }
     } catch (e, stackTrace) {
       _talker.error('Failed to show InterstitialAd', e, stackTrace);
       final subscriptionStatus = await _appHudService.getSubscriptionStatus();
