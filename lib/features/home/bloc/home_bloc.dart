@@ -6,6 +6,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../../../core/services/gallery_service.dart';
+import '../../../core/services/analytics/analytics_service.dart';
+import '../../../core/services/ads/admob_service.dart';
+import '../../../core/subscription/apphud_service.dart';
 import '../../eraser/domain/usecases/get_recent_erased_images_usecase.dart';
 import '../../eraser/domain/usecases/save_erased_image_usecase.dart';
 import '../../eraser/domain/entities/erased_image.dart';
@@ -17,14 +20,23 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final GetRecentErasedImagesUseCase _getRecentErasedImagesUseCase;
   final SaveErasedImageUseCase _saveErasedImageUseCase;
   final Talker _talker;
+  final AnalyticsService _analyticsService;
+  final AdMobService _adMobService;
+  final AppHudService _appHudService;
 
   HomeBloc({
     required GetRecentErasedImagesUseCase getRecentErasedImagesUseCase,
     required SaveErasedImageUseCase saveErasedImageUseCase,
     required Talker talker,
-  }) : _getRecentErasedImagesUseCase = getRecentErasedImagesUseCase,
+    required AnalyticsService analyticsService,
+    required AdMobService adMobService,
+    required AppHudService appHudService,
+  })  : _getRecentErasedImagesUseCase = getRecentErasedImagesUseCase,
        _saveErasedImageUseCase = saveErasedImageUseCase,
        _talker = talker,
+        _analyticsService = analyticsService,
+        _adMobService = adMobService,
+        _appHudService = appHudService,
         super(const HomeInitial()) {
     on<HomeLoadPhotos>(_onLoadPhotos);
     on<HomeImageSourceSelected>(_onImageSourceSelected);
@@ -54,6 +66,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       (erasedImages) {
         final photos = erasedImages.map(_erasedImageToPhotoModel).toList();
         emit(HomeLoaded(photos));
+        _adMobService.showInterstitialAd();
       },
     );
   }
@@ -99,6 +112,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       }
 
       if (image != null) {
+        final isPremium = await _appHudService.isPremium();
+        await _analyticsService.logEvent(
+          'upload_photo',
+          {
+            'source_screen': 'home',
+            'is_premium': isPremium,
+          },
+        );
         emit(HomeImagePicked(image));
       } else {
         // Пользователь просто закрыл bottom sheet без выбора фото
@@ -167,6 +188,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         },
         (_) {
           _talker.info('Photo saved successfully');
+          _analyticsService.logEvent(
+            'save_image',
+            {
+              'source_screen': 'home',
+              'is_premium': false,
+            },
+          );
         },
       );
 

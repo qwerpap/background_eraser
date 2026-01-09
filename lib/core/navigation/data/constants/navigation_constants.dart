@@ -8,6 +8,7 @@ class NavigationConstants {
   static const String settings = '/settings';
   static const String separationResult = '/separation/result';
   static const String logs = '/debug/logs';
+  static const String paywall = '/paywall';
   
   static const Duration fastTransition = Duration(milliseconds: 200);
   static const Duration normalTransition = Duration(milliseconds: 350);

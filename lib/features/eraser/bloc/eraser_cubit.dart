@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:background_eraser/core/domain/errors/failure.dart';
+import 'package:background_eraser/core/services/analytics/analytics_service.dart';
+import 'package:background_eraser/core/services/ads/admob_service.dart';
 import 'package:background_eraser/features/eraser/bloc/eraser_state.dart';
 import 'package:background_eraser/features/eraser/domain/usecases/remove_background_usecase.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -8,11 +10,17 @@ import 'package:talker_flutter/talker_flutter.dart';
 class EraserCubit extends Cubit<EraserState> {
   final RemoveBackgroundUseCase _removeBackgroundUseCase;
   final Talker _talker;
+  final AnalyticsService _analyticsService;
+  final AdMobService _adMobService;
   File? _originalImage;
   File? _processedImage;
 
-  EraserCubit(this._removeBackgroundUseCase, this._talker)
-    : super(const EraserInitial());
+  EraserCubit(
+    this._removeBackgroundUseCase,
+    this._talker,
+    this._analyticsService,
+    this._adMobService,
+  ) : super(const EraserInitial());
 
   void reset() {
     _originalImage = null;
@@ -30,6 +38,14 @@ class EraserCubit extends Cubit<EraserState> {
     _originalImage = image;
     emit(const EraserLoading());
 
+    await _analyticsService.logEvent(
+      'remove_bg_started',
+      {
+        'source_screen': 'eraser',
+        'is_premium': false,
+      },
+    );
+
     final result = await _removeBackgroundUseCase(image);
 
     result.fold(
@@ -46,12 +62,22 @@ class EraserCubit extends Cubit<EraserState> {
         }
         _processedImage = processedImage;
         _talker.info('Background removed successfully: ${processedImage.path}');
+        _analyticsService.logEvent(
+          'remove_bg_success',
+          {
+            'source_screen': 'eraser',
+            'is_premium': false,
+          },
+        );
         emit(
           EraserSuccess(
             originalImage: _originalImage!,
             processedImage: processedImage,
           ),
         );
+        // Показываем рекламу после успешного удаления фона
+        _talker.debug('Calling showInterstitialAd after remove_bg_success');
+        _adMobService.showInterstitialAd();
       },
     );
   }
